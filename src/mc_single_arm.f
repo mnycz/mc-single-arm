@@ -75,6 +75,7 @@ C Initial and reconstructed track quantities.
 	real*8 fry,fr1,fr2
 	real*8 p_spec,th_spec			!spectrometer setting
 	real*8 resmult
+	real*8 E_recon,eloss_E_arm, r              ! Reconstructed Energy and energy loss: Mike N. 12/05/20
 
 C Control flags (from input file)
 	integer*4 ispec
@@ -82,6 +83,7 @@ C Control flags (from input file)
 	logical*4 ms_flag
 	logical*4 wcs_flag
 	logical*4 store_all
+	logical*4 correct_Eloss
 
 c	common /hutflag/ cer_flag,vac_flag
 C Hardwired control flags.
@@ -427,6 +429,12 @@ C Strip off header
       write(*,*),str_line(1:last_char(str_line))
       iss = rd_real(str_line,tar_atom_num)
 
+! Energy Loss flag:
+        read (chanin,1001) str_line
+        write(*,*),str_line(1:last_char(str_line))
+        iss = rd_int(str_line,correct_Eloss)
+        if (.not.iss) stop 'ERROR (Spectrometer selection) in setup!'
+
 
  1000	continue
 
@@ -710,6 +718,20 @@ c            if (ok_spec) spec(58) =1.
             endif 
             ytar_recon = y_s
 
+! Correct for Energy Loss : Mike N. 12/05/20
+	    E_recon = p_spec*(1.+dpp_recon/100.)
+c	    write(6,*) p_spec, dpp_recon, E_recon
+c	    if (correct_Eloss) then
+c	        call trip_thru_target (2, zero, E_recon,dth_recon,
+c     >                                   eloss_E_arm, r, m2, 4, 1)
+	    if (correct_Eloss) then
+c	       write(6,*)'calling Eloss for', ispec
+	       call trip_thru_target(2,ispec,zero,E_recon,
+     & 	                            dth_recon,eloss_E_arm,
+     &                              r,m2,4,1)
+		E_recon = E_recon - eloss_E_arm
+	   endif
+
 C Compute sums for calculating reconstruction variances.
 	    dpp_var(1) = dpp_var(1) + (dpp_recon - dpp_init)
 	    dth_var(1) = dth_var(1) + (dth_recon - dth_init)
@@ -723,6 +745,29 @@ C Compute sums for calculating reconstruction variances.
 	 endif			!Incremented the arrays
 
 
+
+!-------------------- Elastic Cross Section --------------------!
+! Best to include the calculation here or to leave in separate script
+! should be in nbarn/sr                                                                                                                                                                    
+c      double precision function xsec_he3el(e,theta)
+
+c      implicit none
+
+c      double precision alpha,e,ef,fc,fm,Ge,Gm,mt,mott,nbarn,nu
+c      double precision q,qfm,recoil,s2,tau,t2,theta,w1,w2
+c      mt=2.80793                !3He mass = 2.80793 GeV/c**2
+c      alpha=7.3e-3              !       alpha = 1/137
+c      nbarn=0.389e6             ! barn: (1 GeV)**-2 = 0.389e-3 barn                                                                                                                       
+
+
+
+
+
+
+
+
+
+! -------------------- end of Elastic Cross Section Calculation --------------------!
 C Output NTUPLE entry.
 C This is ugly, but want the option to have different outputs
 C for spectrometer ntuples
@@ -759,7 +804,8 @@ C for spectrometer ntuples
 	       shms_hut(21)= shmsSTOP_id
 	       shms_hut(22)= x
 	       shms_hut(23)= y
-               shms_hut(24)= z
+c               shms_hut(24)= z
+	       shms_hut(24) = eloss_E_arm
 	       call hfn(1411,shms_hut)
 	    endif
 	 endif
@@ -792,7 +838,8 @@ C for spectrometer ntuples
                hms_hut(21)=hSTOP_id
 	       hms_hut(22)= x
 	       hms_hut(23)= y
-               hms_hut(24)= z
+c               hms_hut(24)= z
+	       hms_hut(24) = eloss_E_arm
 	       call hfn(1,hms_hut)
 	    endif
 	 endif

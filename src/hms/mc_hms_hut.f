@@ -31,6 +31,9 @@ C Math constants
 
 	real*8 grnd,gauss1			!external functions
 
+C	print *,'mc_hms_hut is called'
+
+
 C----------------------------------------------------------------------
 C HMS_MATERIALS
 C CTP parameter file containing the materials of all the HMS detectors.
@@ -308,7 +311,7 @@ C Initialize scincount to zero
 C------------------------------------------------------------------------------C
 C                           Top of loop through hut                            C
 C------------------------------------------------------------------------------C
-
+C	print *,'mc hut opened'
 C Go to spectrometer exit foil, 25cm before DC1 (Drift forwards from zinit).
 C As usual, neglect effect of nonzero dydzs and dxdzs on radw.
 

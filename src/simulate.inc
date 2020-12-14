@@ -9,4 +9,5 @@
 	real*8 ctau
 	real*8 decdist
 	real*8 Mh2_final
-
+	integer*4 ispec
+	
